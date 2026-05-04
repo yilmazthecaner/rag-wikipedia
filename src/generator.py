@@ -50,7 +50,7 @@ def generate_answer(
     Returns the complete answer string (blocking).
     """
     if not chunks:
-        return "I don't know based on my available data. No relevant context was found in the knowledge base."
+        return "I don't know based on my available data."
 
     prompt = _build_prompt(query, chunks)
 
@@ -97,7 +97,7 @@ def stream_answer(
     Yields token strings as they arrive from Ollama.
     """
     if not chunks:
-        yield "I don't know based on my available data. No relevant context was found in the knowledge base."
+        yield "I don't know based on my available data."
         return
 
     prompt = _build_prompt(query, chunks)

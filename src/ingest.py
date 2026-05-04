@@ -65,30 +65,47 @@ def _fetch_page(title: str) -> dict | None:
     option that works. Returns None on failure.
     """
     wikipedia.set_lang("en")
-    try:
-        page = wikipedia.page(title, auto_suggest=False)
-        return {"title": page.title, "content": page.content, "url": page.url}
-    except wikipedia.DisambiguationError as e:
-        for option in e.options[:3]:
-            try:
-                page = wikipedia.page(option, auto_suggest=False)
-                return {"title": page.title, "content": page.content, "url": page.url}
-            except Exception:
-                continue
-        return None
-    except wikipedia.PageError:
-        # Try with auto_suggest enabled as fallback
+
+    max_attempts = 3
+    backoff_base = 0.5
+
+    def _attempt_fetch(t: str) -> dict | None:
         try:
-            results = wikipedia.search(title, results=1)
-            if results:
-                page = wikipedia.page(results[0], auto_suggest=False)
-                return {"title": page.title, "content": page.content, "url": page.url}
-        except Exception:
-            pass
-        return None
-    except Exception as e:
-        print(f"  Error fetching '{title}': {e}")
-        return None
+            page = wikipedia.page(t, auto_suggest=False)
+            return {"title": page.title, "content": page.content, "url": page.url}
+        except wikipedia.DisambiguationError as e:
+            for option in e.options[:3]:
+                try:
+                    page = wikipedia.page(option, auto_suggest=False)
+                    return {"title": page.title, "content": page.content, "url": page.url}
+                except Exception:
+                    continue
+            return None
+        except wikipedia.PageError:
+            # Try with auto_suggest enabled as fallback
+            try:
+                results = wikipedia.search(t, results=1)
+                if results:
+                    page = wikipedia.page(results[0], auto_suggest=False)
+                    return {"title": page.title, "content": page.content, "url": page.url}
+            except Exception:
+                pass
+            return None
+        except Exception as e:
+            # Bubble up network/temporary errors for retry
+            raise
+
+    # Retry loop with exponential backoff for transient failures
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return _attempt_fetch(title)
+        except Exception as e:
+            if attempt == max_attempts:
+                print(f"  Error fetching '{title}' after {attempt} attempts: {e}")
+                return None
+            sleep_time = backoff_base * (2 ** (attempt - 1))
+            time.sleep(sleep_time)
+            continue
 
 
 # ── Public API ─────────────────────────────────────────────────────────────────
