@@ -234,3 +234,7 @@ Edit `src/config.py` to adjust:
 ## Demo Video
 
 Demo link: eklenecek
+
+### Runtime note
+
+If Ollama is slow to respond, the UI now shows a short context-based fallback answer instead of staying blank. This keeps example queries usable even when the local model is still loading.
