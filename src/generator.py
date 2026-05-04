@@ -8,6 +8,7 @@ No external API is used. The model runs entirely on localhost via Ollama.
 from __future__ import annotations
 
 import json
+import re
 from typing import Generator
 
 import requests
@@ -38,6 +39,31 @@ def _build_prompt(query: str, chunks: list[dict]) -> str:
     return f"""Context:\n{context}\n\nQuestion: {query}\n\nAnswer:"""
 
 
+def _extract_summary(text: str, max_sentences: int = 2, max_chars: int = 260) -> str:
+    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+    summary = " ".join(sentences[:max_sentences]).strip()
+    if len(summary) > max_chars:
+        summary = summary[: max_chars - 1].rsplit(" ", 1)[0] + "…"
+    return summary
+
+
+def _fallback_answer(chunks: list[dict]) -> str:
+    if not chunks:
+        return "I don't know based on my available data."
+
+    pieces = []
+    for chunk in chunks[:2]:
+        title = chunk["metadata"].get("title", "Unknown")
+        summary = _extract_summary(chunk["text"])
+        if summary:
+            pieces.append(f"{title}: {summary}")
+
+    if not pieces:
+        return "I don't know based on my available data."
+
+    return "Based on the available context: " + " ".join(pieces)
+
+
 # ── Non-streaming generation ───────────────────────────────────────────────────
 
 def generate_answer(
@@ -50,9 +76,10 @@ def generate_answer(
     Returns the complete answer string (blocking).
     """
     if not chunks:
-        return "I don't know based on my available data. No relevant context was found in the knowledge base."
+        return "I don't know based on my available data."
 
     prompt = _build_prompt(query, chunks)
+    fallback = _fallback_answer(chunks)
 
     try:
         resp = requests.post(
@@ -62,13 +89,14 @@ def generate_answer(
                 "prompt": prompt,
                 "system": SYSTEM_PROMPT,
                 "stream": False,
+                "keep_alive": "10m",
                 "options": {
                     "temperature": 0.1,   # low temperature → more factual
                     "top_p": 0.9,
-                    "num_predict": 512,
+                    "num_predict": 128,
                 },
             },
-            timeout=180,
+            timeout=(5, 20),
         )
         resp.raise_for_status()
         return resp.json().get("response", "Error: Empty response from model.")
@@ -80,7 +108,10 @@ def generate_answer(
             f"(`ollama pull {model}`)."
         )
     except requests.exceptions.Timeout:
-        return "⚠️  Ollama timed out. The model may be loading — please retry."
+        return (
+            "⚠️  Ollama took too long to respond. "
+            f"{fallback}"
+        )
     except Exception as e:
         return f"⚠️  Generation error: {e}"
 
@@ -97,10 +128,11 @@ def stream_answer(
     Yields token strings as they arrive from Ollama.
     """
     if not chunks:
-        yield "I don't know based on my available data. No relevant context was found in the knowledge base."
+        yield "I don't know based on my available data."
         return
 
     prompt = _build_prompt(query, chunks)
+    fallback = _fallback_answer(chunks)
 
     try:
         with requests.post(
@@ -110,10 +142,11 @@ def stream_answer(
                 "prompt": prompt,
                 "system": SYSTEM_PROMPT,
                 "stream": True,
-                "options": {"temperature": 0.1, "num_predict": 512},
+                "keep_alive": "10m",
+                "options": {"temperature": 0.1, "num_predict": 128},
             },
             stream=True,
-            timeout=180,
+            timeout=(5, 20),
         ) as resp:
             resp.raise_for_status()
             for line in resp.iter_lines():
@@ -130,6 +163,8 @@ def stream_answer(
             "\n⚠️  Cannot connect to Ollama. "
             f"Run `ollama serve` and `ollama pull {model}`."
         )
+    except requests.exceptions.Timeout:
+        yield f"⚠️  Ollama took too long to respond. {fallback}"
     except Exception as e:
         yield f"\n⚠️  Generation error: {e}"
 

@@ -5,17 +5,20 @@
 # ── Wikipedia data fetching ────────────────────────────────────────────────────
 wikipedia==1.4.0
 
-# ── Local embeddings ───────────────────────────────────────────────────────────
-sentence-transformers>=2.7.0
+# ── Local embeddings (pinned for reproducibility)
+sentence-transformers==2.7.0
 
-# ── Vector store ──────────────────────────────────────────────────────────────
-chromadb>=0.5.0
+# ── Vector store
+chromadb==0.5.4
 
-# ── Ollama HTTP client (uses built-in requests) ────────────────────────────────
-requests>=2.31.0
+# ── Ollama HTTP client (uses built-in requests)
+requests==2.31.0
 
-# ── Chat UI ────────────────────────────────────────────────────────────────────
-streamlit>=1.35.0
+# ── Chat UI
+streamlit==1.35.0
 
-# ── Utilities ─────────────────────────────────────────────────────────────────
-tqdm>=4.66.0
+# ── Utilities
+tqdm==4.66.0
+
+# ── Test runner
+pytest==7.4.0
