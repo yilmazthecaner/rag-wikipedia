@@ -228,12 +228,13 @@ Edit `src/config.py` to adjust:
 | `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | Sentence-transformer model |
 | `OLLAMA_MODEL`    | `llama3.2:3b`      | Local LLM                  |
 | `TOP_K`           | 5                  | Chunks retrieved per query |
+| `RETRIEVAL_MAX_DISTANCE` | 0.62         | Reject weak matches        |
 
 ---
 
 ## Demo Video
 
-Demo link: eklenecek
+Demo link: https://youtu.be/F9CTXMH5Kp8
 
 ### Runtime note
 

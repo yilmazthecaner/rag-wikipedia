@@ -31,9 +31,12 @@ def _build_prompt(query: str, chunks: list[dict]) -> str:
         return query
 
     context_blocks = []
-    for c in chunks:
+    for c in chunks[:5]:
         title = c["metadata"].get("title", "Unknown")
-        context_blocks.append(f"[Source: {title}]\n{c['text']}")
+        snippet = c["text"].replace("\n", " ").strip()
+        if len(snippet) > 220:
+            snippet = snippet[:219].rsplit(" ", 1)[0] + "…"
+        context_blocks.append(f"[Source: {title}]\n{snippet}")
 
     context = "\n\n---\n\n".join(context_blocks)
     return f"""Context:\n{context}\n\nQuestion: {query}\n\nAnswer:"""
@@ -52,7 +55,14 @@ def _fallback_answer(chunks: list[dict]) -> str:
         return "I don't know based on my available data."
 
     pieces = []
-    for chunk in chunks[:2]:
+    compact_chunks = sorted(
+        chunks[:5],
+        key=lambda c: (
+            c["metadata"].get("title", ""),
+            c["metadata"].get("chunk_index", 9999),
+        ),
+    )
+    for chunk in compact_chunks[:2]:
         title = chunk["metadata"].get("title", "Unknown")
         summary = _extract_summary(chunk["text"])
         if summary:
@@ -93,10 +103,11 @@ def generate_answer(
                 "options": {
                     "temperature": 0.1,   # low temperature → more factual
                     "top_p": 0.9,
-                    "num_predict": 128,
+                    "num_ctx": 1024,
+                    "num_predict": 64,
                 },
             },
-            timeout=(5, 20),
+            timeout=(5, 12),
         )
         resp.raise_for_status()
         return resp.json().get("response", "Error: Empty response from model.")
@@ -108,10 +119,7 @@ def generate_answer(
             f"(`ollama pull {model}`)."
         )
     except requests.exceptions.Timeout:
-        return (
-            "⚠️  Ollama took too long to respond. "
-            f"{fallback}"
-        )
+        return fallback
     except Exception as e:
         return f"⚠️  Generation error: {e}"
 
@@ -143,10 +151,10 @@ def stream_answer(
                 "system": SYSTEM_PROMPT,
                 "stream": True,
                 "keep_alive": "10m",
-                "options": {"temperature": 0.1, "num_predict": 128},
+                "options": {"temperature": 0.1, "num_ctx": 1024, "num_predict": 64},
             },
             stream=True,
-            timeout=(5, 20),
+            timeout=(5, 12),
         ) as resp:
             resp.raise_for_status()
             for line in resp.iter_lines():
@@ -164,7 +172,7 @@ def stream_answer(
             f"Run `ollama serve` and `ollama pull {model}`."
         )
     except requests.exceptions.Timeout:
-        yield f"⚠️  Ollama took too long to respond. {fallback}"
+        yield fallback
     except Exception as e:
         yield f"\n⚠️  Generation error: {e}"
 

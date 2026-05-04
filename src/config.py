@@ -36,3 +36,4 @@ COLLECTION_NAME = "wikipedia_rag"
 
 # ── Retrieval ─────────────────────────────────────────────────────────────────
 TOP_K = 5
+RETRIEVAL_MAX_DISTANCE = 0.62

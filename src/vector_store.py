@@ -19,7 +19,7 @@ import os
 
 import chromadb
 
-from src.config import CHROMA_DIR, COLLECTION_NAME
+from src.config import CHROMA_DIR, COLLECTION_NAME, RETRIEVAL_MAX_DISTANCE
 
 
 def _get_client() -> chromadb.PersistentClient:
@@ -101,6 +101,8 @@ def query_store(
             results["metadatas"][0],
             results["distances"][0],
         ):
+            if dist > RETRIEVAL_MAX_DISTANCE:
+                continue
             output.append({"text": doc, "metadata": meta, "distance": dist})
     return output
 
