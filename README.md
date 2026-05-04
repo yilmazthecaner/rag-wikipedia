@@ -50,7 +50,7 @@ User Query
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/blg483e-rag-project.git
+ git clone https://github.com/yilmazthecaner/blg483e-rag-project.git
 cd blg483e-rag-project
 ```
 
@@ -228,4 +228,4 @@ Edit `src/config.py` to adjust:
 
 ## Demo Video
 
-[Insert Loom / YouTube link here]
+Demo link: eklenecek
