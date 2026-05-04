@@ -29,6 +29,7 @@ User Query
 ```
 
 **Design choices:**
+
 - **Option B** (one ChromaDB collection + `entity_type` metadata) — simpler, more flexible for mixed queries.
 - **Chunking:** 500-char fixed-size chunks with 50-char overlap, sentence-boundary aware.
 - **Embeddings:** `all-MiniLM-L6-v2` — 384-dim, ~22 MB, fast CPU inference, no API needed.
@@ -38,10 +39,10 @@ User Query
 
 ## Prerequisites
 
-| Tool | Version | Install |
-|------|---------|---------|
-| Python | ≥ 3.10 | [python.org](https://python.org) |
-| Ollama | latest | [ollama.com](https://ollama.com) |
+| Tool   | Version | Install                          |
+| ------ | ------- | -------------------------------- |
+| Python | ≥ 3.10  | [python.org](https://python.org) |
+| Ollama | latest  | [ollama.com](https://ollama.com) |
 
 ---
 
@@ -50,7 +51,7 @@ User Query
 ### 1. Clone the repository
 
 ```bash
- git clone https://github.com/yilmazthecaner/blg483e-rag-project.git
+git clone https://github.com/yilmazthecaner/blg483e-rag-project.git
 cd blg483e-rag-project
 ```
 
@@ -152,6 +153,7 @@ python main.py status
 ## Example Queries
 
 ### People
+
 ```
 Who was Albert Einstein and what is he known for?
 What did Marie Curie discover?
@@ -161,6 +163,7 @@ What is Frida Kahlo known for?
 ```
 
 ### Places
+
 ```
 Where is the Eiffel Tower located?
 Why is the Great Wall of China important?
@@ -170,6 +173,7 @@ Where is Mount Everest?
 ```
 
 ### Mixed
+
 ```
 Which famous place is located in Turkey?
 Which person is associated with electricity?
@@ -178,6 +182,7 @@ Compare the Eiffel Tower and the Statue of Liberty
 ```
 
 ### Expected failure cases (system should say "I don't know")
+
 ```
 Who is the president of Mars?
 Tell me about John Doe
@@ -216,13 +221,13 @@ Tell me about John Doe
 
 Edit `src/config.py` to adjust:
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `CHUNK_SIZE` | 500 | Characters per chunk |
-| `CHUNK_OVERLAP` | 50 | Overlap between chunks |
+| Parameter         | Default            | Description                |
+| ----------------- | ------------------ | -------------------------- |
+| `CHUNK_SIZE`      | 500                | Characters per chunk       |
+| `CHUNK_OVERLAP`   | 50                 | Overlap between chunks     |
 | `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | Sentence-transformer model |
-| `OLLAMA_MODEL` | `llama3.2:3b` | Local LLM |
-| `TOP_K` | 5 | Chunks retrieved per query |
+| `OLLAMA_MODEL`    | `llama3.2:3b`      | Local LLM                  |
+| `TOP_K`           | 5                  | Chunks retrieved per query |
 
 ---
 
